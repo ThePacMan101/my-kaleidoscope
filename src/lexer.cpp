@@ -1,59 +1,69 @@
-// #include <string>
+#include <string>
+#include "lexer.hpp"
 
-// enum Token {
-//     tok_eof=-1,
-//     tok_def=-2,
-//     tok_extern=-3,
-//     tok_identifier=-4,
-//     tok_number=-5,
-// };
+namespace lexer{
 
-// static std::string IdentifierStr;
-// static double NumVal;
+static std::string IdentifierStr;
+static double NumVal;
+static int last_char = ' ';
 
-// static int get_tok() {
-//     static int last_char = ' ';
-//     while(isspace(last_char))
-//         last_char = getchar();
+inline static void skip_whitespaces(){
+    while(isspace(last_char))
+        last_char = getchar();
+}
 
+inline static int identifier(){
+    IdentifierStr = last_char;
+    while(isalnum(last_char = getchar()))
+        IdentifierStr += last_char;
+
+    if(IdentifierStr == "def"){
+        return tok_def;
+    }
+    if(IdentifierStr == "extern"){
+        return tok_extern;
+    }
+    return tok_identifier;
+}
+
+inline static int number(){
+    std::string num_str;
+    do{
+        num_str += last_char;
+        last_char = getchar();
+    }while(isdigit(last_char) || last_char == '.');
+
+    NumVal = strtod(num_str.c_str(),0);
+    return tok_number;
+}
+
+inline static void skip_comment(){
+    do last_char = getchar();
+    while(last_char != EOF && last_char != '\n' && last_char != '\r');
+}
+
+inline static int eof(){
+    return tok_eof;
+}
+
+int get_tok() {
+    skip_whitespaces();
     
-//     if(isalpha(last_char)){
-//         IdentifierStr = last_char;
-//         while(isalnum(last_char = getchar()))
-//             IdentifierStr += last_char;
+    if(last_char == '#'){
+        skip_comment();
+        if(last_char != EOF)      // keep skipping   
+                return get_tok(); // new comments  
+    } 
 
-//         if(IdentifierStr == "def"){
-//             return tok_def;
-//         }
-//         if(IdentifierStr == "extern"){
-//             return tok_extern;
-//         }
-//         return tok_identifier;
-//     }
+    if(isalpha(last_char)) return identifier();
 
-//     if(isdigit(last_char) || last_char == '.'){
-//         std::string num_str;
-//         do{
-//             num_str += last_char;
-//             last_char = getchar();
-//         }while(isdigit(last_char) || last_char == '.');
+    if(isdigit(last_char) || last_char == '.') return number();
 
-//         NumVal = strtod(num_str.c_str(), 0);
-//         return tok_number;
-//     }
+    if(last_char == EOF) return eof();
+        
+    int this_char = last_char;
+    last_char = getchar();
+    return this_char;
+}
 
-//     if(last_char == '#'){
-//         do last_char = getchar();
-//         while(last_char != EOF && last_char != '\n' && last_char != '\r');
-
-//         if(last_char != EOF)
-//             return get_tok();
-//     }
-
-//     if(last_char == EOF)
-//         return tok_eof;
-
-//     int this_char = last_char;
-//     last_char = getchar();
-//     return this_char;
-// }
+}
