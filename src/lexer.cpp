@@ -32,11 +32,23 @@ inline static int identifier() {
 
 inline static int number(){ // number: [0-9.]+
     std::string num_str;
-    do{
+    //e.g. parsing 123.456
+
+    // parses 123
+    while(isdigit(last_char)){
         num_str += last_char;
         last_char = getchar();
-    }while(isdigit(last_char) || last_char == '.');
-
+    }
+    // parses .
+    if(last_char == '.'){
+        num_str += last_char;
+        last_char = getchar();
+    }
+    // parses 456
+    while(isdigit(last_char)){
+        num_str += last_char;
+        last_char = getchar();
+    }
     NumVal = strtod(num_str.c_str(),0);
     return tok_number;
 }
