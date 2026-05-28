@@ -77,7 +77,7 @@ int get_tok() {
 
     if(last_char == EOF) return eof();
         
-    // At this point, we have a special chararcter
+    // At this point returns the character as its ascii value
     int this_char = last_char;
     last_char = getchar();
     return this_char;
