@@ -1,7 +1,7 @@
 #include <string>
 #include "lexer.hpp"
 
-namespace lexer{
+namespace lexer {
 
 static std::string IdentifierStr;
 static double NumVal;
@@ -12,9 +12,13 @@ inline static void skip_whitespaces(){
         last_char = getchar();
 }
 
-inline static int identifier(){
+inline static bool is_identifier_char(const char & c){ // identifier: [a-zA-Z_][a-zA-Z0-9_]*
+    return isalnum(c) || c == '_';
+}
+
+inline static int identifier() { 
     IdentifierStr = last_char;
-    while(isalnum(last_char = getchar()))
+    while(is_identifier_char(last_char = getchar()))
         IdentifierStr += last_char;
 
     if(IdentifierStr == "def"){
@@ -26,7 +30,7 @@ inline static int identifier(){
     return tok_identifier;
 }
 
-inline static int number(){
+inline static int number(){ // number: [0-9.]+
     std::string num_str;
     do{
         num_str += last_char;
@@ -55,12 +59,13 @@ int get_tok() {
                 return get_tok(); // new comments  
     } 
 
-    if(isalpha(last_char)) return identifier();
+    if(isalpha(last_char) || last_char == '_' ) return identifier();
 
     if(isdigit(last_char) || last_char == '.') return number();
 
     if(last_char == EOF) return eof();
         
+    // At this point, we have a special chararcter
     int this_char = last_char;
     last_char = getchar();
     return this_char;
