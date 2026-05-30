@@ -4,61 +4,61 @@
 
 namespace ast{
 
-class ExprAST {
+class Expr {
     public:
-        virtual ~ExprAST() = default;
+        virtual ~Expr() = default;
 };
 
-class NumberExprAST : public ExprAST {
+class NumberExpr : public Expr {
     double Val; 
     public:
-        NumberExprAST(double Val) :Val {Val} {}
+        NumberExpr(double Val) :Val {Val} {}
 };
 
-class VariableExprAST : public ExprAST{
+class VariableExpr : public Expr{
     std::string name;
     public:
-        VariableExprAST(const std::string& name): name {name} {}
+        VariableExpr(const std::string& name): name {name} {}
 };
 
-class BinaryExprAST : public ExprAST{
+class BinaryExpr : public Expr{
     char op;
-    std::unique_ptr<ExprAST> left,right;
+    std::unique_ptr<Expr> left,right;
     public:
-        BinaryExprAST(
+        BinaryExpr(
             const char& op,
-            std::unique_ptr<ExprAST> left,
-            std::unique_ptr<ExprAST> right
+            std::unique_ptr<Expr> left,
+            std::unique_ptr<Expr> right
         ) : op {op}, left{std::move(left)}, right{std::move(right)} {}
 };
 
-class CallExprAST : public ExprAST{
+class CallExpr : public Expr{
     std::string callee;
-    std::vector<std::unique_ptr<ExprAST>> args;
+    std::vector<std::unique_ptr<Expr>> args;
     public:
-        CallExprAST(
+        CallExpr(
             const std::string& callee,
-            std::vector<std::unique_ptr<ExprAST>> args
+            std::vector<std::unique_ptr<Expr>> args
         ) : callee {callee}, args {std::move(args)} {}
 };
 
 // this represents only the interface to a function
-class PrototypeAST {
+class Prototype {
     std::string name;
     std::vector<std::string> args;
     public:
-        PrototypeAST(const std::string& name, std::vector<std::string> args) 
+        Prototype(const std::string& name, std::vector<std::string> args) 
         : name {name}, args {std::move(args)} {}
 
         const std::string& get_name() const {return name; }
 };
 
 // this represents the function itself
-class FunctionAST {
-    std::unique_ptr<PrototypeAST> proto;
-    std::unique_ptr<ExprAST> body;
+class Function {
+    std::unique_ptr<Prototype> proto;
+    std::unique_ptr<Expr> body;
     public:
-        FunctionAST(std::unique_ptr<PrototypeAST> proto, std::unique_ptr<ExprAST> body)
+        Function(std::unique_ptr<Prototype> proto, std::unique_ptr<Expr> body)
         : proto {std::move(proto)}, body {std::move(body)} {}
 };
 

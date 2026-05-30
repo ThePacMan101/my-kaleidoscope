@@ -11,26 +11,27 @@ static int get_next_token(){
     return curr_tok = lexer::get_tok();
 }
 
-static std::unique_ptr<ast::ExprAST> log_error(const char * str){
+static std::unique_ptr<ast::Expr> log_error(const char * str){
     fprintf(stderr,"[error]: %s\n",str);
     return nullptr;
 }
 
-static std::unique_ptr<ast::PrototypeAST> log_prototype_error(const char* str){
+static std::unique_ptr<ast::Prototype> log_prototype_error(const char* str){
     log_error(str);
     return nullptr;
 }
 
-static std::unique_ptr<ast::ExprAST> number_expr(){
-    // curr token is a number
-    auto result = std::make_unique<ast::NumberExprAST>(
+static std::unique_ptr<ast::Expr> number_expr(){
+    // curr token is a number literal
+    auto result = std::make_unique<ast::NumberExpr>(
         lexer::get_num_val()
     );
     get_next_token();
     return std::move(result);
 }
 
-static std::unique_ptr<ast::ExprAST> paren_expr(){
+static std::unique_ptr<ast::Expr> paren_expr(){
+    // curr token is a '('
     get_next_token(); // skip '('
     auto expr = expression();
     if(!expr) return nullptr;
@@ -39,11 +40,21 @@ static std::unique_ptr<ast::ExprAST> paren_expr(){
     return expr;
 }
 
-static std::unique_ptr<ast::ExprAST> identifier(){
+static std::unique_ptr<ast::Expr> identifier(){
+    // curr_tok is an identifier
+    std::string identifier_name = lexer::get_identifier_str();
+    get_next_token(); // skip the identifer
+    if(curr_tok != '(') 
+        // when I parse some identifier, if I don't call it, I presume it's just a variable
+        return std::make_unique<ast::VariableExpr>(identifier_name);
+    get_next_token(); // skip '('
+    ast::Expr* args;
+    
+
 
 }
 
-static std::unique_ptr<ast::ExprAST> expression(){
+static std::unique_ptr<ast::Expr> expression(){
     // switch (curr_tok){
     //     case lexer::tok_eof:
     //     case lexer::tok_def:
