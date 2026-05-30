@@ -3,8 +3,8 @@
 
 namespace lexer {
 
-static std::string IdentifierStr;
-static double NumVal;
+static std::string identifier_str;
+static double num_val;
 static int last_char = ' ';
 
 inline static void skip_whitespaces(){
@@ -17,14 +17,14 @@ inline static bool is_identifier_char(const char & c){ // identifier: [a-zA-Z_][
 }
 
 inline static int identifier() { 
-    IdentifierStr = last_char;
+    identifier_str = last_char;
     while(is_identifier_char(last_char = getchar()))
-        IdentifierStr += last_char;
+        identifier_str += last_char;
 
-    if(IdentifierStr == "def"){
+    if(identifier_str == "def"){
         return tok_def;
     }
-    if(IdentifierStr == "extern"){
+    if(identifier_str == "extern"){
         return tok_extern;
     }
     return tok_identifier;
@@ -49,7 +49,7 @@ inline static int number(){ // number: [0-9.]+
         num_str += last_char;
         last_char = getchar();
     }
-    NumVal = strtod(num_str.c_str(),0);
+    num_val = strtod(num_str.c_str(),0);
     return tok_number;
 }
 
@@ -82,5 +82,14 @@ int get_tok() {
     last_char = getchar();
     return this_char;
 }
+
+double get_num_val(){
+    return num_val;
+}
+
+std::string get_identifier_str(){
+    return identifier_str;
+}
+
 
 }

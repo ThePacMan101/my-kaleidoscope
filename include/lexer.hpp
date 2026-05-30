@@ -13,4 +13,6 @@ namespace lexer{
     };
     
     int get_tok();
+    double get_num_val();
+    std::string get_identifier_str();
 }
