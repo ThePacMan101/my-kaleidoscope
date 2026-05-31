@@ -21,22 +21,27 @@ constexpr std::array<int,256> binary_operator_precedence = []() consteval {
 }();
 // ===========================================================================================
 // helpers
-static int get_next_token();
+int advance();
+int peek();
 static int get_precedence(int);
 static std::unique_ptr<ast::Expr> log_error(const char *);
 static std::unique_ptr<ast::Prototype> log_prototype_error(const char*);
 // ===========================================================================================
 // parsers
-static std::unique_ptr<ast::Expr> expression();
-static std::unique_ptr<ast::Expr> binary_operator_remainder(int,std::unique_ptr<ast::Expr>);
-static std::unique_ptr<ast::Expr> number();
-static std::unique_ptr<ast::Expr> paren();
-static std::unique_ptr<ast::Expr> identifier();
-static std::unique_ptr<ast::Expr> primary();
+std::unique_ptr<ast::Expr> expression();
+std::unique_ptr<ast::Expr> binary_operator_remainder(int,std::unique_ptr<ast::Expr>);
+std::unique_ptr<ast::Expr> number();
+std::unique_ptr<ast::Expr> paren();
+std::unique_ptr<ast::Expr> identifier();
+std::unique_ptr<ast::Expr> primary();
 // ===========================================================================================
 
-static int get_next_token(){
+int advance(){
     return curr_tok = lexer::get_tok();
+}
+
+int peek(){
+    return curr_tok;
 }
 
 static int get_precedence(int tok){
@@ -58,14 +63,14 @@ static std::unique_ptr<ast::Prototype> log_prototype_error(const char* str){
     return nullptr;
 }
 
-static std::unique_ptr<ast::Expr> expression(){
+std::unique_ptr<ast::Expr> expression(){
     auto left = primary();
     if(!left) return nullptr;
 
     return binary_operator_remainder(0,std::move(left));
 }
 
-static std::unique_ptr<ast::Expr> binary_operator_remainder
+std::unique_ptr<ast::Expr> binary_operator_remainder
     (int expr_precedence, 
     std::unique_ptr<ast::Expr> left){
     // precedence climbing algorithm implementation
@@ -79,7 +84,7 @@ static std::unique_ptr<ast::Expr> binary_operator_remainder
         
         // if we get here, we are certain we see a operator
         int current_binary_operator = curr_tok;
-        get_next_token(); // skips the operator
+        advance(); // skips the operator
 
         // now we need to parse what's on the right
         // notice that this could be a parenthesized 
@@ -111,33 +116,33 @@ static std::unique_ptr<ast::Expr> binary_operator_remainder
     }
 }
 
-static std::unique_ptr<ast::Expr> number(){
+std::unique_ptr<ast::Expr> number(){
     // curr token is a number literal
     auto result = std::make_unique<ast::NumberExpr>(
         lexer::get_num_val()
     );
-    get_next_token();
+    advance();
     return std::move(result);
 }
 
-static std::unique_ptr<ast::Expr> paren(){
+std::unique_ptr<ast::Expr> paren(){
     // curr token is a '('
-    get_next_token(); // skip '('
+    advance(); // skip '('
     auto expr = expression();
     if(!expr) return nullptr;
     if(curr_tok!=')') return log_error("Expected ')'.");
-    get_next_token(); // skip ')'
+    advance(); // skip ')'
     return expr;
 }
 
-static std::unique_ptr<ast::Expr> identifier(){
+std::unique_ptr<ast::Expr> identifier(){
     // curr_tok is an identifier
     std::string identifier_name = lexer::get_identifier_str();
-    get_next_token(); // skip the identifer
+    advance(); // skip the identifer
     if(curr_tok != '(') 
         // when I parse some identifier, if I don't call it, I presume it's just a variable
         return std::make_unique<ast::VariableExpr>(identifier_name);
-    get_next_token(); // skip '('
+    advance(); // skip '('
     std::vector<std::unique_ptr<ast::Expr>> args;
     if(curr_tok != ')'){
         while(true){
@@ -149,15 +154,15 @@ static std::unique_ptr<ast::Expr> identifier(){
             if(curr_tok == ')') break;
 
             if(curr_tok != ',') return log_error("Expected ')' or ',' in argument list.");
-            get_next_token();
+            advance();
         }
     }   
-    get_next_token(); // skip ')'
+    advance(); // skip ')'
 
     return std::make_unique<ast::CallExpr>(identifier_name, std::move(args));
 }
 
-static std::unique_ptr<ast::Expr> primary(){
+std::unique_ptr<ast::Expr> primary(){
     switch (curr_tok){
         default: 
             return log_error("Unknown token when expecting an expression.");
@@ -169,7 +174,6 @@ static std::unique_ptr<ast::Expr> primary(){
             return paren();    
     }
 }
-
 
 
 }
