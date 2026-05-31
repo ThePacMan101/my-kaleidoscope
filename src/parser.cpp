@@ -26,14 +26,15 @@ int peek();
 static int get_precedence(int);
 static std::unique_ptr<ast::Expr> log_error(const char *);
 static std::unique_ptr<ast::Prototype> log_prototype_error(const char*);
+static std::unique_ptr<ast::Expr> binary_operator_remainder(int,std::unique_ptr<ast::Expr>);
 // ===========================================================================================
 // parsers
 std::unique_ptr<ast::Expr> expression();
-std::unique_ptr<ast::Expr> binary_operator_remainder(int,std::unique_ptr<ast::Expr>);
 std::unique_ptr<ast::Expr> number();
 std::unique_ptr<ast::Expr> paren();
 std::unique_ptr<ast::Expr> identifier();
 std::unique_ptr<ast::Expr> primary();
+std::unique_ptr<ast::Expr> prototype();
 // ===========================================================================================
 
 int advance(){
