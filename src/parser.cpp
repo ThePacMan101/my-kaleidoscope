@@ -5,7 +5,6 @@
 #include <iostream>
 
 namespace parser{
-
 static int curr_tok;
 constexpr std::array<int,256> binary_operator_precedence = []() consteval {
     std::array<int,256> table{};
@@ -20,6 +19,17 @@ constexpr std::array<int,256> binary_operator_precedence = []() consteval {
     
     return table;
 }();
+
+static int get_next_token();
+static std::unique_ptr<ast::Expr> log_error(const char *);
+static std::unique_ptr<ast::Prototype> log_prototype_error(const char*);
+static int get_precedence(int);
+static std::unique_ptr<ast::Expr> expression();
+static std::unique_ptr<ast::Expr> binary_operator_remainder(int,std::unique_ptr<ast::Expr>);
+static std::unique_ptr<ast::Expr> number();
+static std::unique_ptr<ast::Expr> paren();
+static std::unique_ptr<ast::Expr> identifier();
+static std::unique_ptr<ast::Expr> primary();
 
 static int get_next_token(){
     return curr_tok = lexer::get_tok();
@@ -44,6 +54,12 @@ static int get_precedence(int tok){
     return token_precedence;
 }
 
+static std::unique_ptr<ast::Expr> expression(){
+    auto left = primary();
+    if(!left) return nullptr;
+
+    return binary_operator_remainder(0,std::move(left));
+}
 
 static std::unique_ptr<ast::Expr> binary_operator_remainder
     (int expr_precedence, 
@@ -89,13 +105,6 @@ static std::unique_ptr<ast::Expr> binary_operator_remainder
             std::move(right)
         );
     }
-}
-
-static std::unique_ptr<ast::Expr> expression(){
-    auto left = primary();
-    if(!left) return nullptr;
-
-    return binary_operator_remainder(0,std::move(left));
 }
 
 static std::unique_ptr<ast::Expr> number(){
