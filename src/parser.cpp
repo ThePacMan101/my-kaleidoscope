@@ -19,20 +19,33 @@ constexpr std::array<int,256> binary_operator_precedence = []() consteval {
     
     return table;
 }();
-
+// ===========================================================================================
+// helpers
 static int get_next_token();
+static int get_precedence(int);
 static std::unique_ptr<ast::Expr> log_error(const char *);
 static std::unique_ptr<ast::Prototype> log_prototype_error(const char*);
-static int get_precedence(int);
+// ===========================================================================================
+// parsers
 static std::unique_ptr<ast::Expr> expression();
 static std::unique_ptr<ast::Expr> binary_operator_remainder(int,std::unique_ptr<ast::Expr>);
 static std::unique_ptr<ast::Expr> number();
 static std::unique_ptr<ast::Expr> paren();
 static std::unique_ptr<ast::Expr> identifier();
 static std::unique_ptr<ast::Expr> primary();
+// ===========================================================================================
 
 static int get_next_token(){
     return curr_tok = lexer::get_tok();
+}
+
+static int get_precedence(int tok){
+    if(!isascii(tok))
+        return -1;
+
+    int token_precedence = binary_operator_precedence[tok];
+    if(token_precedence <= 0) return -1;
+    return token_precedence;
 }
 
 static std::unique_ptr<ast::Expr> log_error(const char * str){
@@ -43,15 +56,6 @@ static std::unique_ptr<ast::Expr> log_error(const char * str){
 static std::unique_ptr<ast::Prototype> log_prototype_error(const char* str){
     log_error(str);
     return nullptr;
-}
-
-static int get_precedence(int tok){
-    if(!isascii(tok))
-        return -1;
-
-    int token_precedence = binary_operator_precedence[tok];
-    if(token_precedence <= 0) return -1;
-    return token_precedence;
 }
 
 static std::unique_ptr<ast::Expr> expression(){
@@ -121,7 +125,7 @@ static std::unique_ptr<ast::Expr> paren(){
     get_next_token(); // skip '('
     auto expr = expression();
     if(!expr) return nullptr;
-    if(curr_tok!=')') return log_error("expected ')'.");
+    if(curr_tok!=')') return log_error("Expected ')'.");
     get_next_token(); // skip ')'
     return expr;
 }
