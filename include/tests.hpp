@@ -1,5 +1,6 @@
 #pragma once
 
 namespace tests{
-    void parser();
+    void parser_repl();
+    void repl();
 }

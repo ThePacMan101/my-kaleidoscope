@@ -3,7 +3,7 @@
 
 
 int main(void){
-    tests::parser();
+    tests::repl();
     std::cout << 
     "\n---------\n" <<
     "Finished!\n";
