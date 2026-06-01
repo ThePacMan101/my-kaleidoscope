@@ -34,7 +34,10 @@ std::unique_ptr<ast::Expr> number();
 std::unique_ptr<ast::Expr> paren();
 std::unique_ptr<ast::Expr> identifier();
 std::unique_ptr<ast::Expr> primary();
-std::unique_ptr<ast::Expr> prototype();
+std::unique_ptr<ast::Prototype> prototype();
+std::unique_ptr<ast::Function> definition();
+std::unique_ptr<ast::Prototype> extern_();
+std::unique_ptr<ast::Function> top_level_expr();
 // ===========================================================================================
 
 int advance(){
@@ -176,5 +179,51 @@ std::unique_ptr<ast::Expr> primary(){
     }
 }
 
+std::unique_ptr<ast::Prototype> prototype(){
+    if(curr_tok != lexer::tok_identifier)
+        return log_prototype_error("Expected function name in prototype.");
+
+    std::string fn_name = lexer::get_identifier_str();
+    
+    advance(); // skip function name
+
+    if(curr_tok != '(')
+        return log_prototype_error("Expected '(' after function name in prototype.");
+    
+    std::vector<std::string> arg_names;
+    while(advance() == lexer::tok_identifier)
+        arg_names.push_back(lexer::get_identifier_str());
+    if(curr_tok != ')')
+        return log_prototype_error("Expected ')' after function arguments in protype.");
+    
+    advance(); // skip ')'
+
+    return std::make_unique<ast::Prototype>(fn_name,std::move(arg_names));
+}
+
+std::unique_ptr<ast::Function> definition(){
+    advance(); // skip 'def'
+    auto proto = prototype();
+    if(!proto) return nullptr;
+    if(auto expr = expression())
+        return std::make_unique<ast::Function>(std::move(proto),std::move(expr));
+    return nullptr;
+}
+
+std::unique_ptr<ast::Prototype> extern_(){
+    advance(); // skip 'extern'
+    return prototype();
+}
+
+std::unique_ptr<ast::Function> top_level_expr(){
+    // we need top level expressions in order
+    // to be able to type expressions outside functions
+    if(auto expr = expression()){
+        // make a fake anonymous function and then just return the expression result
+        auto proto = std::make_unique<ast::Prototype>("__anon_expr",std::vector<std::string>());
+        return std::make_unique<ast::Function>(std::move(proto),std::move(expr));
+    }
+    return nullptr;
+}
 
 }
