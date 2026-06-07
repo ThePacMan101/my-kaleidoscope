@@ -1,29 +1,11 @@
 #pragma once
 #include <memory>
+#include <string>
 #include <vector>
 
 namespace ast{
 
-class NumberExpr;
-class VariableExpr;
-class BinaryExpr;
-class CallExpr;
-class Prototype;
-class Function;
-
-class Visitor{
-    public:
-        virtual ~Visitor() = default;
-
-        virtual void visit(NumberExpr&   node) = 0;
-        virtual void visit(NumberExpr&   node) = 0;
-        virtual void visit(VariableExpr& node) = 0;
-        virtual void visit(BinaryExpr&   node) = 0;
-        virtual void visit(CallExpr&     node) = 0;
-        virtual void visit(Prototype& node) = 0;
-        virtual void visit(Function&  node) = 0;
-};
-
+class Visitor;
 
 class Expr {
     public:
@@ -32,21 +14,21 @@ class Expr {
 };
 
 class NumberExpr : public Expr {
-    double Val; 
+    double val; 
     public:
-        NumberExpr(double Val) :Val {Val} {}
-        void accept(Visitor& visitor) override {
-            visitor.visit(*this);
-        }
+        NumberExpr(double val) :val {val} {}
+        double get_val() const {return val;}
+        
+        void accept(Visitor& visitor) override;
 };
 
 class VariableExpr : public Expr{
     std::string name;
     public:
         VariableExpr(const std::string& name): name {name} {}
-        void accept(Visitor& visitor) override {
-            visitor.visit(*this);
-        }
+        const std::string& get_name() const {return name;}
+        
+        void accept(Visitor& visitor) override;
 };
 
 class BinaryExpr : public Expr{
@@ -58,9 +40,11 @@ class BinaryExpr : public Expr{
             std::unique_ptr<Expr> left,
             std::unique_ptr<Expr> right
         ) : op {op}, left{std::move(left)}, right{std::move(right)} {}
-        void accept(Visitor& visitor) override {
-            visitor.visit(*this);
-        }
+        char  get_op()    const {return op;}
+        Expr* get_left()  const {return left.get();}
+        Expr* get_right() const {return right.get();}
+        
+        void accept(Visitor& visitor) override;
 };
 
 class CallExpr : public Expr{
@@ -71,9 +55,10 @@ class CallExpr : public Expr{
             const std::string& callee,
             std::vector<std::unique_ptr<Expr>> args
         ) : callee {callee}, args {std::move(args)} {}
-        void accept(Visitor& visitor) override {
-            visitor.visit(*this);
-        }
+        const std::string& get_callee() const {return callee;}
+        const std::vector<std::unique_ptr<Expr>>& get_args() const {return args;}
+        
+        void accept(Visitor& visitor) override;
 };
 
 // this represents only the interface to a function
@@ -84,21 +69,22 @@ class Prototype {
         Prototype(const std::string& name, std::vector<std::string> args) 
         : name {name}, args {std::move(args)} {}
         const std::string& get_name() const {return name; }
-        void accept(Visitor& visitor) {
-            visitor.visit(*this);
-        }
+        const std::vector<std::string>& get_args() const {return args;}
+        
+        void accept(Visitor& visitor);
 };
 
 // this represents the function itself
 class Function {
-    std::unique_ptr<Prototype> proto;
+    std::unique_ptr<Prototype> prototype;
     std::unique_ptr<Expr> body;
     public:
-        Function(std::unique_ptr<Prototype> proto, std::unique_ptr<Expr> body)
-        : proto {std::move(proto)}, body {std::move(body)} {}
-        void accept(Visitor& visitor) {
-            visitor.visit(*this);
-        }
+        Function(std::unique_ptr<Prototype> prototype, std::unique_ptr<Expr> body)
+        : prototype {std::move(prototype)}, body {std::move(body)} {}
+        Prototype* get_prototype() const {return prototype.get();}
+        Expr* get_body() const {return body.get();}
+        
+        void accept(Visitor& visitor);
 };
 
 
