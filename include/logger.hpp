@@ -4,8 +4,9 @@
 
 namespace logger {
 
-template <typename T>
-std::unique_ptr<T> error(const char* str){
+/* Must have nullable return type */
+template <typename returntype> 
+returntype error(const char* str){
     std::cerr << "[ERROR]: " << str << ".\n";
     return nullptr;
 }
