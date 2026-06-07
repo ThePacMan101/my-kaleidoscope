@@ -8,7 +8,6 @@ class Visitor{
         virtual ~Visitor() = default;
         
         virtual void visit(NumberExpr&   node) = 0;
-        virtual void visit(NumberExpr&   node) = 0;
         virtual void visit(VariableExpr& node) = 0;
         virtual void visit(BinaryExpr&   node) = 0;
         virtual void visit(CallExpr&     node) = 0;
