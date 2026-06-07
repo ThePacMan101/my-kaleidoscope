@@ -14,6 +14,8 @@ class Printer : public Visitor {
         Printer(): indentation {0} {}
         Printer(int indentation): indentation {indentation} {}
         void print(Expr* node);
+        void print(Prototype* node);
+        void print(Function* node);
 
         void visit(NumberExpr& node) override;
         void visit(VariableExpr& node) override;

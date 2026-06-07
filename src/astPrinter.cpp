@@ -6,7 +6,31 @@ namespace ast{
 
 void Printer::print_ident() const {
     for(int i = 0 ; i < indentation ; ++i)
-        std::cout << " ";
+        std::cout << "  ";
+}
+
+void Printer::print(Expr* node){
+    indentation = 0;
+    if(node) 
+        node->accept(*this);
+    else    
+        std::cout << "(void)\n";
+}
+
+void Printer::print(Function* node){
+    indentation = 0;
+    if(node) 
+        node->accept(*this);
+    else    
+        std::cout << "(void)\n";
+}
+
+void Printer::print(Prototype* node){
+    indentation = 0;
+    if(node) 
+        node->accept(*this);
+    else    
+        std::cout << "(void)\n";
 }
 
 void Printer::visit(NumberExpr& node) {
