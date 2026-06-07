@@ -1,6 +1,7 @@
 #include "parser.hpp"
 #include "lexer.hpp"
 #include "ast.hpp"
+#include "logger.hpp"
 #include <array>
 #include <iostream>
 
@@ -24,8 +25,6 @@ constexpr std::array<int,256> binary_operator_precedence = []() consteval {
 int advance();
 int peek();
 static int get_precedence(int);
-static std::unique_ptr<ast::Expr> log_error(const char *);
-static std::unique_ptr<ast::Prototype> log_prototype_error(const char*);
 static std::unique_ptr<ast::Expr> binary_operator_remainder(int,std::unique_ptr<ast::Expr>);
 // ===========================================================================================
 // parsers
@@ -55,16 +54,6 @@ static int get_precedence(int tok){
     int token_precedence = binary_operator_precedence[tok];
     if(token_precedence <= 0) return -1;
     return token_precedence;
-}
-
-static std::unique_ptr<ast::Expr> log_error(const char * str){
-    fprintf(stderr,"[error]: %s\n",str);
-    return nullptr;
-}
-
-static std::unique_ptr<ast::Prototype> log_prototype_error(const char* str){
-    log_error(str);
-    return nullptr;
 }
 
 std::unique_ptr<ast::Expr> expression(){
@@ -134,7 +123,7 @@ std::unique_ptr<ast::Expr> paren(){
     advance(); // skip '('
     auto expr = expression();
     if(!expr) return nullptr;
-    if(curr_tok!=')') return log_error("Expected ')'.");
+    if(curr_tok!=')') return logger::error<ast::Expr>("Expected ')'.");
     advance(); // skip ')'
     return expr;
 }
@@ -157,7 +146,7 @@ std::unique_ptr<ast::Expr> identifier(){
             
             if(curr_tok == ')') break;
 
-            if(curr_tok != ',') return log_error("Expected ')' or ',' in argument list.");
+            if(curr_tok != ',') return logger::error<ast::Expr>("Expected ')' or ',' in argument list.");
             advance();
         }
     }   
@@ -169,7 +158,7 @@ std::unique_ptr<ast::Expr> identifier(){
 std::unique_ptr<ast::Expr> primary(){
     switch (curr_tok){
         default: 
-            return log_error("Unknown token when expecting an expression.");
+            return logger::error<ast::Expr>("Unknown token when expecting an expression.");
         case lexer::tok_identifier:
             return identifier();    
         case lexer::tok_number:
@@ -181,20 +170,20 @@ std::unique_ptr<ast::Expr> primary(){
 
 std::unique_ptr<ast::Prototype> prototype(){
     if(curr_tok != lexer::tok_identifier)
-        return log_prototype_error("Expected function name in prototype.");
+        return logger::error<ast::Prototype>("Expected function name in prototype.");
 
     std::string fn_name = lexer::get_identifier_str();
     
     advance(); // skip function name
 
     if(curr_tok != '(')
-        return log_prototype_error("Expected '(' after function name in prototype.");
+        return logger::error<ast::Prototype>("Expected '(' after function name in prototype.");
     
     std::vector<std::string> arg_names;
     while(advance() == lexer::tok_identifier)
         arg_names.push_back(lexer::get_identifier_str());
     if(curr_tok != ')')
-        return log_prototype_error("Expected ')' after function arguments in protype.");
+        return logger::error<ast::Prototype>("Expected ')' after function arguments in protype.");
     
     advance(); // skip ')'
 
