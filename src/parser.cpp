@@ -4,6 +4,7 @@
 #include "logger.hpp"
 #include <array>
 #include <iostream>
+#include <memory>
 
 namespace parser{
 static int curr_tok;
