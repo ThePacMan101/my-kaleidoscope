@@ -10,7 +10,7 @@ namespace detail {
 }
 
 template <detail::Nullable returntype> 
-returntype error(const char* str){
+returntype error(std::string_view str){
     std::cerr << "[ERROR]: " << str << ".\n";
     return nullptr;
 }
