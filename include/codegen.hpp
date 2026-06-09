@@ -1,0 +1,42 @@
+#pragma once
+#include <llvm/IR/IRBuilder.h>
+
+#include <memory>
+#include <string>
+#include <map>
+#include "astVisitor.hpp"
+
+namespace llvm {
+    class Value;
+    class Module;
+    class LLVMContext;
+}
+
+namespace ast {
+    
+class CodeGenerator : public ast::Visitor {
+    private:
+        std::unique_ptr<llvm::LLVMContext> context;
+        std::unique_ptr<llvm::IRBuilder<>> builder;
+        std::unique_ptr<llvm::Module> module;
+        std::map<std::string, llvm::Value *> named_values;
+
+        llvm::Value* current_value = nullptr;
+
+    public:
+        CodeGenerator();
+        ~CodeGenerator();
+
+        llvm::Value* get_current_value() const {return current_value;}
+        llvm::Module* get_module() const {return module.get();}
+
+        void visit(NumberExpr& node) override;
+        void visit(VariableExpr& node) override;
+        void visit(BinaryExpr& node) override;
+        void visit(CallExpr& node) override;
+        void visit(Prototype& node) override;
+        void visit(Function& node) override;
+    
+};
+
+}
