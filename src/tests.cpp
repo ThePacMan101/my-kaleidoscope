@@ -1,12 +1,20 @@
 #include "parser.hpp"
 #include "lexer.hpp"
 #include "astPrinter.hpp"
+#include "codegen.hpp"
+#include "llvm/IR/Module.h"
 
 namespace tests{
-static void handle_definition(){
+static void handle_definition(ast::CodeGenerator& code_generator){
     if (auto ast = parser::definition()){
-        fprintf(stdout, "Parsed a function definition.\n");
-        ast::Printer().print(ast.get());        
+        code_generator.visit(*ast);
+        auto* ast_IR = code_generator.get_current_value();
+        if(ast_IR){
+            fprintf(stdout, "Parsed a function definition.\n");
+            ast::Printer().print(ast.get());
+            fprintf(stdout, "-----------------------------\n");        
+            ast_IR->print(llvm::errs());
+        }
     }
     else{
         // Skip token for error recovery.
@@ -14,10 +22,16 @@ static void handle_definition(){
     }
 }
 
-static void handle_extern() {
+static void handle_extern(ast::CodeGenerator& code_generator) {
     if (auto ast = parser::extern_()){
-        fprintf(stdout, "Parsed an extern\n");
-        ast::Printer().print(ast.get());
+        code_generator.visit(*ast);
+        auto* ast_IR = code_generator.get_current_value();
+        if(ast_IR){
+            fprintf(stdout, "Parsed an extern\n");
+            ast::Printer().print(ast.get());
+            fprintf(stdout, "-----------------------------\n");
+            ast_IR->print(llvm::errs());
+        }
     }
     else{
         // Skip token for error recovery.
@@ -25,11 +39,18 @@ static void handle_extern() {
     }
 }
 
-static void handle_top_level_expr(){
+static void handle_top_level_expr(ast::CodeGenerator& code_generator){
     // Evaluate a top-level expression into an anonymous function.
     if (auto ast = parser::top_level_expr()){
-        fprintf(stdout, "Parsed a top-level expr\n");
-        ast::Printer().print(ast.get());
+        code_generator.visit(*ast);
+        auto* ast_IR = code_generator.get_current_value();
+        if(ast_IR){
+            fprintf(stdout, "Parsed a top-level expr\n");
+            ast::Printer().print(ast.get());
+            fprintf(stdout, "-----------------------------\n");
+            ast_IR->print(llvm::errs());
+            static_cast<llvm::Function*>(ast_IR)->eraseFromParent();
+        }
     }
     else{
         // Skip token for error recovery.
@@ -39,6 +60,8 @@ static void handle_top_level_expr(){
 
 void repl(){
     // Prime the first token.
+    auto code_generator = ast::CodeGenerator();
+
     fprintf(stdout, "ready> ");
     parser::advance();
     while (true){
@@ -50,16 +73,18 @@ void repl(){
             parser::advance();
             break;
         case lexer::tok_def:
-            handle_definition();
+            handle_definition(code_generator);
             break;
         case lexer::tok_extern:
-            handle_extern();
+            handle_extern(code_generator);
             break;
         default:
-            handle_top_level_expr();
+            handle_top_level_expr(code_generator);
             break;
         }
     }
+    fprintf(stdout, "-----------------------------\n");
+    code_generator.get_module()->print(llvm::errs(),nullptr);
 }
 
 }
