@@ -21,7 +21,7 @@ CodeGenerator::~CodeGenerator() = default;
 
 CodeGenerator::CodeGenerator() {
     context = std::make_unique<llvm::LLVMContext>();
-    module  = std::make_unique<llvm::Module>("Kaleidoscop",*context);
+    module  = std::make_unique<llvm::Module>("Kaleidoscope",*context);
     builder = std::make_unique<llvm::IRBuilder<>>(*context); 
 }
 
