@@ -1,9 +1,10 @@
 #include <iostream>
-#include "tests.hpp"
+#include "driver.hpp"
 
 
 int main(void){
-    tests::repl();
+    Driver d;
+    d.repl();
     std::cout << 
     "\n---------\n" <<
     "Finished!\n";

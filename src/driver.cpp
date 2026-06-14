@@ -2,10 +2,17 @@
 #include "lexer.hpp"
 #include "astPrinter.hpp"
 #include "codegen.hpp"
+#include "driver.hpp"
 #include "llvm/IR/Module.h"
 
-namespace tests{
-static void handle_definition(ast::CodeGenerator& code_generator){
+Driver::Driver(){
+    context = std::make_unique<llvm::LLVMContext>();
+    module  = std::make_unique<llvm::Module>("Kaleidoscope",*context);
+}
+
+Driver::~Driver() = default;
+
+void Driver::handle_definition(ast::CodeGenerator& code_generator){
     if (auto ast = parser::definition()){
         code_generator.visit(*ast);
         auto* ast_IR = code_generator.get_current_value();
@@ -22,7 +29,7 @@ static void handle_definition(ast::CodeGenerator& code_generator){
     }
 }
 
-static void handle_extern(ast::CodeGenerator& code_generator) {
+void Driver::handle_extern(ast::CodeGenerator& code_generator) {
     if (auto ast = parser::extern_()){
         code_generator.visit(*ast);
         auto* ast_IR = code_generator.get_current_value();
@@ -39,7 +46,7 @@ static void handle_extern(ast::CodeGenerator& code_generator) {
     }
 }
 
-static void handle_top_level_expr(ast::CodeGenerator& code_generator){
+void Driver::handle_top_level_expr(ast::CodeGenerator& code_generator){
     // Evaluate a top-level expression into an anonymous function.
     if (auto ast = parser::top_level_expr()){
         code_generator.visit(*ast);
@@ -58,7 +65,7 @@ static void handle_top_level_expr(ast::CodeGenerator& code_generator){
     }
 }
 
-void repl(){
+void Driver::repl(){
     // Prime the first token.
     auto code_generator = ast::CodeGenerator();
 
@@ -87,4 +94,3 @@ void repl(){
     code_generator.get_module()->print(llvm::errs(),nullptr);
 }
 
-}
