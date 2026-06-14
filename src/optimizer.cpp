@@ -1,5 +1,9 @@
 #include <llvm/Passes/PassBuilder.h>
 #include <llvm/Passes/StandardInstrumentations.h>
+#include <llvm/Transforms/InstCombine/InstCombine.h>
+#include <llvm/Transforms/Scalar/Reassociate.h>
+#include <llvm/Transforms/Scalar/GVN.h>
+#include <llvm/Transforms/Scalar/SimplifyCFG.h>
 #include <memory>
 
 #include "optimizer.hpp"
@@ -25,5 +29,9 @@ Optimizer::Optimizer(llvm::LLVMContext& context){
         module_analysis_manager.get()
     );
 
+    function_pass_manager->addPass(llvm::InstCombinePass());
+    function_pass_manager->addPass(llvm::ReassociatePass());
+    function_pass_manager->addPass(llvm::GVNPass());
+    function_pass_manager->addPass(llvm::SimplifyCFGPass());
 }
 }
