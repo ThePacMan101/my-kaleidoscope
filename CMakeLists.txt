@@ -4,13 +4,17 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 project(kaleidoscope VERSION 0.1)
 
+# ensure static linking for performance and portability
+set(BUILD_SHARED_LIBS OFF)
+set(LLVM_LINK_LLVM_DYLIB OFF)
+
 # setup correct Intellisense in VScode
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_package(LLVM REQUIRED CONFIG)
 include_directories(${LLVM_INCLUDE_DIRS})
 add_definitions(${LLVM_DEFINITIONS})
-llvm_map_components_to_libnames(llvm_libs Core Support Analysis Passes) #  InstCombine ScalarOpts?
+llvm_map_components_to_libnames(llvm_libs core support analysis passes instcombine scalaropts)
 
 file(GLOB SRC_FILES CONFIGURE_DEPENDS "src/*.cpp")
 
