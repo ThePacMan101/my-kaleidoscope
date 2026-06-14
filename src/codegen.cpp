@@ -2,6 +2,7 @@
 #include <llvm/IR/Value.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Module.h>
+
 #include "codegen.hpp"
 #include "logger.hpp"
 
@@ -22,7 +23,7 @@ CodeGenerator::~CodeGenerator() = default;
 CodeGenerator::CodeGenerator() {
     context = std::make_unique<llvm::LLVMContext>();
     module  = std::make_unique<llvm::Module>("Kaleidoscope",*context);
-    builder = std::make_unique<llvm::IRBuilder<>>(*context); 
+    builder = std::make_unique<llvm::IRBuilder<>>(*context);
 }
 
 void CodeGenerator::visit(NumberExpr& node){

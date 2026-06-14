@@ -16,11 +16,13 @@ namespace ast {
     
 class CodeGenerator : public ast::Visitor {
     private:
+        // context and module
         std::unique_ptr<llvm::LLVMContext> context;
         std::unique_ptr<llvm::IRBuilder<>> builder;
         std::unique_ptr<llvm::Module> module;
         std::map<std::string, llvm::Value *> named_values;
-
+        
+        // auxiliary for return values from visit methods
         llvm::Value* current_value = nullptr;
 
     public:
