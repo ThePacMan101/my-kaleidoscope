@@ -20,14 +20,13 @@ This is used in order to keep the code readable while maintaining the accept met
 
 CodeGenerator::~CodeGenerator() = default;
 
-CodeGenerator::CodeGenerator() {
-    context = std::make_unique<llvm::LLVMContext>();
-    module  = std::make_unique<llvm::Module>("Kaleidoscope",*context);
-    builder = std::make_unique<llvm::IRBuilder<>>(*context);
+CodeGenerator::CodeGenerator(llvm::LLVMContext& context,llvm::Module& module):
+        context {context}, module {module} {
+    builder = std::make_unique<llvm::IRBuilder<>>(context);
 }
 
 void CodeGenerator::visit(NumberExpr& node){
-    current_value = llvm::ConstantFP::get(*context,llvm::APFloat(node.get_val()));
+    current_value = llvm::ConstantFP::get(context,llvm::APFloat(node.get_val()));
 }
 
 void CodeGenerator::visit(VariableExpr& node){
@@ -53,7 +52,7 @@ void CodeGenerator::visit(BinaryExpr& node){
             // (U)nsigned (I)nteger (To) (F)loating (P)oint
             current_value = builder->CreateUIToFP(
                 left,
-                llvm::Type::getDoubleTy(*context),
+                llvm::Type::getDoubleTy(context),
                 "booltmp"
             );
             break;
@@ -64,7 +63,7 @@ void CodeGenerator::visit(BinaryExpr& node){
             // (U)nsigned (I)nteger to (F)loating (P)oint
             current_value = builder->CreateUIToFP(
                 left,
-                llvm::Type::getDoubleTy(*context),
+                llvm::Type::getDoubleTy(context),
                 "booltmp"
             );
             break;
@@ -95,7 +94,7 @@ void CodeGenerator::visit(CallExpr& node){
     auto& callee = node.get_callee();
     auto& args = node.get_args();
     
-    llvm::Function* callee_IR = module->getFunction(callee);
+    llvm::Function* callee_IR = module.getFunction(callee);
     if(!callee_IR){
         current_value = logger::error<llvm::Value*>("Unknown function referenced");
         return;
@@ -122,12 +121,12 @@ void CodeGenerator::visit(Prototype& node){
     // The only types in kaleidoscope are doubles, so all parameters are doubles!
     std::vector<llvm::Type*> params(
         args.size(),
-        llvm::Type::getDoubleTy(*context)
+        llvm::Type::getDoubleTy(context)
     );
 
     // Every function in kaleidoscope must return a double!
     llvm::FunctionType* function_t = llvm::FunctionType::get(
-        llvm::Type::getDoubleTy(*context),
+        llvm::Type::getDoubleTy(context),
         params,
         false   // is_variadic_arg? (we don't have those in kaleidoscope!)
     );
@@ -136,7 +135,7 @@ void CodeGenerator::visit(Prototype& node){
         function_t,
         llvm::Function::ExternalLinkage,
         function_name,
-        module.get()
+        &module
     );
 
     unsigned index = 0;
@@ -151,7 +150,7 @@ void CodeGenerator::visit(Function& node){
     ast::Expr* body = node.get_body(); 
 
     // First try to find the function from a extern declaration
-    llvm::Function* function = module->getFunction(prototype->get_name());
+    llvm::Function* function = module.getFunction(prototype->get_name());
 
     // If we don't find an extern declaration, then this must be a function definition
     // now we generate the prototype 
@@ -172,7 +171,7 @@ void CodeGenerator::visit(Function& node){
     }
 
     // Now we must generate the function body
-    llvm::BasicBlock* block = llvm::BasicBlock::Create(*context,"entry",function);
+    llvm::BasicBlock* block = llvm::BasicBlock::Create(context,"entry",function);
     builder->SetInsertPoint(block);
 
     // erase previous namespace and populate it if current function's param names

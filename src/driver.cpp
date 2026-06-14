@@ -67,7 +67,7 @@ void Driver::handle_top_level_expr(ast::CodeGenerator& code_generator){
 
 void Driver::repl(){
     // Prime the first token.
-    auto code_generator = ast::CodeGenerator();
+    auto code_generator = ast::CodeGenerator(*context,*module);
 
     fprintf(stdout, "ready> ");
     parser::advance();
@@ -91,6 +91,6 @@ void Driver::repl(){
         }
     }
     fprintf(stdout, "-----------------------------\n");
-    code_generator.get_module()->print(llvm::errs(),nullptr);
+    module->print(llvm::errs(),nullptr);
 }
 

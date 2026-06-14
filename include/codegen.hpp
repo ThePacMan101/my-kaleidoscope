@@ -16,21 +16,20 @@ namespace ast {
     
 class CodeGenerator : public ast::Visitor {
     private:
-        // context and module
-        std::unique_ptr<llvm::LLVMContext> context;
         std::unique_ptr<llvm::IRBuilder<>> builder;
-        std::unique_ptr<llvm::Module> module;
+
+        llvm::LLVMContext& context;
+        llvm::Module& module;
         std::map<std::string, llvm::Value *> named_values;
-        
+
         // auxiliary for return values from visit methods
         llvm::Value* current_value = nullptr;
 
     public:
-        CodeGenerator();
+        CodeGenerator(llvm::LLVMContext& context,llvm::Module& module);
         ~CodeGenerator();
 
         llvm::Value* get_current_value() const {return current_value;}
-        llvm::Module* get_module() const {return module.get();}
 
         void visit(NumberExpr& node) override;
         void visit(VariableExpr& node) override;
