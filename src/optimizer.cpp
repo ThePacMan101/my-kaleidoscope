@@ -6,6 +6,8 @@
 
 namespace opt{
 
+Optimizer::~Optimizer() = default;
+
 Optimizer::Optimizer(llvm::LLVMContext& context){
     function_pass_manager = std::make_unique<llvm::FunctionPassManager>();
     loop_analysis_manager = std::make_unique<llvm::LoopAnalysisManager>();
