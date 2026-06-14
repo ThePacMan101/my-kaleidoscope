@@ -5,10 +5,9 @@
 #include "driver.hpp"
 #include "llvm/IR/Module.h"
 
-Driver::Driver(){
-    context = std::make_unique<llvm::LLVMContext>();
-    module  = std::make_unique<llvm::Module>("Kaleidoscope",*context);
-}
+Driver::Driver(): 
+context {std::make_unique<llvm::LLVMContext>()},
+module {std::make_unique<llvm::Module>("Kaleidoscope",*context)} {}
 
 Driver::~Driver() = default;
 
