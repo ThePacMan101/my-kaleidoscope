@@ -2,6 +2,7 @@
 #include "lexer.hpp"
 #include "astPrinter.hpp"
 #include "codegen.hpp"
+#include "optimizer.hpp"
 #include "driver.hpp"
 #include "llvm/IR/Module.h"
 
@@ -11,7 +12,7 @@ module {std::make_unique<llvm::Module>("Kaleidoscope",*context)} {}
 
 Driver::~Driver() = default;
 
-void Driver::handle_definition(ast::CodeGenerator& code_generator){
+void Driver::handle_definition(ast::CodeGenerator& code_generator,opt::Optimizer& code_optimizer){
     if (auto ast = parser::definition()){
         code_generator.visit(*ast);
         auto* ast_IR = code_generator.get_current_value();
@@ -19,7 +20,17 @@ void Driver::handle_definition(ast::CodeGenerator& code_generator){
             fprintf(stdout, "Parsed a function definition.\n");
             ast::Printer().print(ast.get());
             fprintf(stdout, "-----------------------------\n");        
+            fprintf(stdout, "------ Unoptimized  IR ------\n");        
+            fprintf(stdout, "-----------------------------\n");        
             ast_IR->print(llvm::errs());
+
+            // run the opt passes on the function
+            code_optimizer.optimize(static_cast<llvm::Function*>(ast_IR));
+            
+            fprintf(stdout, "-----------------------------\n");        
+            fprintf(stdout, "------- Optimized  IR -------\n");
+            fprintf(stdout, "-----------------------------\n");        
+            ast_IR->print(llvm::errs()); 
         }
     }
     else{
@@ -45,7 +56,7 @@ void Driver::handle_extern(ast::CodeGenerator& code_generator) {
     }
 }
 
-void Driver::handle_top_level_expr(ast::CodeGenerator& code_generator){
+void Driver::handle_top_level_expr(ast::CodeGenerator& code_generator,opt::Optimizer& code_optimizer){
     // Evaluate a top-level expression into an anonymous function.
     if (auto ast = parser::top_level_expr()){
         code_generator.visit(*ast);
@@ -53,8 +64,19 @@ void Driver::handle_top_level_expr(ast::CodeGenerator& code_generator){
         if(ast_IR){
             fprintf(stdout, "Parsed a top-level expr\n");
             ast::Printer().print(ast.get());
-            fprintf(stdout, "-----------------------------\n");
+            fprintf(stdout, "-----------------------------\n");        
+            fprintf(stdout, "------ Unoptimized  IR ------\n");        
+            fprintf(stdout, "-----------------------------\n");        
             ast_IR->print(llvm::errs());
+            
+            // run the opt passes on the function
+            code_optimizer.optimize(static_cast<llvm::Function*>(ast_IR));
+            
+            fprintf(stdout, "-----------------------------\n");        
+            fprintf(stdout, "------- Optimized  IR -------\n");
+            fprintf(stdout, "-----------------------------\n");        
+            ast_IR->print(llvm::errs()); 
+            
             static_cast<llvm::Function*>(ast_IR)->eraseFromParent();
         }
     }
@@ -65,10 +87,11 @@ void Driver::handle_top_level_expr(ast::CodeGenerator& code_generator){
 }
 
 void Driver::repl(){
-    // Prime the first token.
     auto code_generator = ast::CodeGenerator(*context,*module);
-
+    auto code_optimizer = opt::Optimizer(*context);
+    
     fprintf(stdout, "ready> ");
+    // Prime the first token.
     parser::advance();
     while (true){
         fprintf(stdout, "ready> ");
@@ -79,13 +102,13 @@ void Driver::repl(){
             parser::advance();
             break;
         case lexer::tok_def:
-            handle_definition(code_generator);
+            handle_definition(code_generator,code_optimizer);
             break;
         case lexer::tok_extern:
             handle_extern(code_generator);
             break;
         default:
-            handle_top_level_expr(code_generator);
+            handle_top_level_expr(code_generator,code_optimizer);
             break;
         }
     }
