@@ -124,7 +124,7 @@ std::unique_ptr<ast::Expr> paren(){
     advance(); // skip '('
     auto expr = expression();
     if(!expr) return nullptr;
-    if(curr_tok!=')') return logger::error<std::unique_ptr<ast::Expr>>("Expected ')'.");
+    if(curr_tok!=')') return logger::error<std::unique_ptr<ast::Expr>>("Expected ')'");
     advance(); // skip ')'
     return expr;
 }
@@ -147,7 +147,7 @@ std::unique_ptr<ast::Expr> identifier(){
             
             if(curr_tok == ')') break;
 
-            if(curr_tok != ',') return logger::error<std::unique_ptr<ast::Expr>>("Expected ')' or ',' in argument list.");
+            if(curr_tok != ',') return logger::error<std::unique_ptr<ast::Expr>>("Expected ')' or ',' in argument list");
             advance();
         }
     }   
@@ -159,7 +159,7 @@ std::unique_ptr<ast::Expr> identifier(){
 std::unique_ptr<ast::Expr> primary(){
     switch (curr_tok){
         default: 
-            return logger::error<std::unique_ptr<ast::Expr>>("Unknown token when expecting an expression.");
+            return logger::error<std::unique_ptr<ast::Expr>>("Unknown token when expecting an expression");
         case lexer::tok_identifier:
             return identifier();    
         case lexer::tok_number:
@@ -171,20 +171,20 @@ std::unique_ptr<ast::Expr> primary(){
 
 std::unique_ptr<ast::Prototype> prototype(){
     if(curr_tok != lexer::tok_identifier)
-        return logger::error<std::unique_ptr<ast::Prototype>>("Expected function name in prototype.");
+        return logger::error<std::unique_ptr<ast::Prototype>>("Expected function name in prototype");
 
     std::string fn_name = lexer::get_identifier_str();
     
     advance(); // skip function name
 
     if(curr_tok != '(')
-        return logger::error<std::unique_ptr<ast::Prototype>>("Expected '(' after function name in prototype.");
+        return logger::error<std::unique_ptr<ast::Prototype>>("Expected '(' after function name in prototype");
     
     std::vector<std::string> arg_names;
     while(advance() == lexer::tok_identifier)
         arg_names.push_back(lexer::get_identifier_str());
     if(curr_tok != ')')
-        return logger::error<std::unique_ptr<ast::Prototype>>("Expected ')' after function arguments in protype.");
+        return logger::error<std::unique_ptr<ast::Prototype>>("Expected ')' after function arguments in protype");
     
     advance(); // skip ')'
 
