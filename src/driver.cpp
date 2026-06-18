@@ -12,6 +12,21 @@ module {std::make_unique<llvm::Module>("Kaleidoscope",*context)} {}
 
 Driver::~Driver() = default;
 
+void Driver::handle_function(llvm::Function* ast_IR,ast::CodeGenerator& code_generator,opt::Optimizer& code_optimizer){
+    fprintf(stdout, "-----------------------------\n");        
+    fprintf(stdout, "------ Unoptimized  IR ------\n");        
+    fprintf(stdout, "-----------------------------\n");        
+    ast_IR->print(llvm::errs());
+
+    // run the opt passes on the function
+    code_optimizer.optimize(ast_IR);
+    
+    fprintf(stdout, "-----------------------------\n");        
+    fprintf(stdout, "------- Optimized  IR -------\n");
+    fprintf(stdout, "-----------------------------\n");        
+    ast_IR->print(llvm::errs()); 
+}
+
 void Driver::handle_definition(ast::CodeGenerator& code_generator,opt::Optimizer& code_optimizer){
     if (auto ast = parser::definition()){
         code_generator.visit(*ast);
@@ -19,18 +34,9 @@ void Driver::handle_definition(ast::CodeGenerator& code_generator,opt::Optimizer
         if(ast_IR){
             fprintf(stdout, "Parsed a function definition.\n");
             ast::Printer().print(ast.get());
-            fprintf(stdout, "-----------------------------\n");        
-            fprintf(stdout, "------ Unoptimized  IR ------\n");        
-            fprintf(stdout, "-----------------------------\n");        
-            ast_IR->print(llvm::errs());
-
-            // run the opt passes on the function
-            code_optimizer.optimize(static_cast<llvm::Function*>(ast_IR));
             
-            fprintf(stdout, "-----------------------------\n");        
-            fprintf(stdout, "------- Optimized  IR -------\n");
-            fprintf(stdout, "-----------------------------\n");        
-            ast_IR->print(llvm::errs()); 
+            handle_function(static_cast<llvm::Function*>(ast_IR),code_generator,code_optimizer);
+
         }
     }
     else{
@@ -64,18 +70,8 @@ void Driver::handle_top_level_expr(ast::CodeGenerator& code_generator,opt::Optim
         if(ast_IR){
             fprintf(stdout, "Parsed a top-level expr\n");
             ast::Printer().print(ast.get());
-            fprintf(stdout, "-----------------------------\n");        
-            fprintf(stdout, "------ Unoptimized  IR ------\n");        
-            fprintf(stdout, "-----------------------------\n");        
-            ast_IR->print(llvm::errs());
-            
-            // run the opt passes on the function
-            code_optimizer.optimize(static_cast<llvm::Function*>(ast_IR));
-            
-            fprintf(stdout, "-----------------------------\n");        
-            fprintf(stdout, "------- Optimized  IR -------\n");
-            fprintf(stdout, "-----------------------------\n");        
-            ast_IR->print(llvm::errs()); 
+
+            handle_function(static_cast<llvm::Function*>(ast_IR),code_generator,code_optimizer);
             
             static_cast<llvm::Function*>(ast_IR)->eraseFromParent();
         }

@@ -11,6 +11,7 @@ namespace llvm {
     class Value;
     class Module;
     class LLVMContext;
+    class Function;
 }
 
 class Driver {
@@ -19,6 +20,7 @@ class Driver {
         std::unique_ptr<llvm::Module> module;
 
         void handle_extern(ast::CodeGenerator&);
+        void handle_function(llvm::Function*,ast::CodeGenerator&,opt::Optimizer&);
         void handle_definition(ast::CodeGenerator&,opt::Optimizer&);
         void handle_top_level_expr(ast::CodeGenerator&,opt::Optimizer&);
     public:
