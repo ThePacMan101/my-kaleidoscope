@@ -4,11 +4,27 @@
 #include "codegen.hpp"
 #include "optimizer.hpp"
 #include "driver.hpp"
-#include "llvm/IR/Module.h"
+#include "kaleidoscopeJIT.hpp"
+#include <llvm/IR/Module.h>
+#include <llvm/Support/TargetSelect.h>
+#include <llvm/Support/raw_ostream.h>
 
 Driver::Driver(): 
 context {std::make_unique<llvm::LLVMContext>()},
-module {std::make_unique<llvm::Module>("Kaleidoscope",*context)} {}
+module {std::make_unique<llvm::Module>("Kaleidoscope",*context)} {
+    llvm::InitializeNativeTarget();
+    llvm::InitializeNativeTargetAsmPrinter();
+    llvm::InitializeNativeTargetAsmParser();
+
+    auto expected_JIT = llvm::orc::KaleidoscopeJIT::Create();
+    if(!expected_JIT){
+        llvm::errs() << "Failed to create JIT: " << expected_JIT.takeError() << "\n";
+        exit(1);
+    }
+    JIT = std::move(expected_JIT.get());
+    
+    module->setDataLayout(JIT->getDataLayout());
+}
 
 Driver::~Driver() = default;
 

@@ -2,6 +2,7 @@
 
 #include <memory>
 #include "optimizer.hpp"
+#include "kaleidoscopeJIT.hpp"
 
 namespace ast{
     class CodeGenerator;
@@ -16,6 +17,7 @@ namespace llvm {
 
 class Driver {
     private:
+        std::unique_ptr<llvm::orc::KaleidoscopeJIT> JIT;
         std::unique_ptr<llvm::LLVMContext> context;
         std::unique_ptr<llvm::Module> module;
 

@@ -14,7 +14,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 find_package(LLVM REQUIRED CONFIG)
 include_directories(${LLVM_INCLUDE_DIRS})
 add_definitions(${LLVM_DEFINITIONS})
-llvm_map_components_to_libnames(llvm_libs core support analysis passes instcombine scalaropts orcjit native)
+llvm_map_components_to_libnames(llvm_libs core support analysis passes instcombine scalaropts orcjit native executionengine)
 
 file(GLOB SRC_FILES CONFIGURE_DEPENDS "src/*.cpp")
 
