@@ -38,11 +38,19 @@ void CodeGenerator::visit(VariableExpr& node){
     }
 }
 void CodeGenerator::visit(BinaryExpr& node){
-    llvm::Value* left = codegen(node.get_left()); 
+    llvm::Value* left = codegen(node.get_left());
+    if(!left){
+        current_value = nullptr;
+        return;
+    } 
     
     auto op = node.get_op();
 
     llvm::Value* right = codegen(node.get_right()); 
+    if(!right){
+        current_value = nullptr;
+        return;
+    }
     
     // whenever I refer to Float here, assume arbitrary precision 
     switch (op){
