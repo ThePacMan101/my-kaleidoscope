@@ -61,11 +61,11 @@ void Driver::handle_definition(ast::CodeGenerator& code_generator,opt::Optimizer
             
             handle_function(static_cast<llvm::Function*>(ast_IR),code_generator,code_optimizer);
 
-            auto resource_tracker = JIT->getMainJITDylib().createResourceTracker();
+            // auto resource_tracker = JIT->getMainJITDylib().createResourceTracker();
             auto thread_safe_module = llvm::orc::ThreadSafeModule(std::move(module),std::move(context));
             
             // hand to the JIT
-            if(auto err = JIT->addModule(std::move(thread_safe_module),resource_tracker)){
+            if(auto err = JIT->addModule(std::move(thread_safe_module)/*,resource_tracker*/)){
                 llvm::errs() << "JIT error: " << err << "\n";
             }
         }
