@@ -30,42 +30,40 @@ module {std::make_unique<llvm::Module>("Kaleidoscope",*context)} {
 Driver::~Driver() = default;
 
 void Driver::reinitialize_module(){
-    module.reset();
-    context = std::make_unique<llvm::LLVMContext>();
     module  = std::make_unique<llvm::Module>("Kaleidoscope",*context);
     module->setDataLayout(JIT->getDataLayout());
 }
 
-void Driver::handle_function(llvm::Function* ast_IR,ast::CodeGenerator& code_generator,opt::Optimizer& code_optimizer){
-    fprintf(stdout, "-----------------------------\n");        
-    fprintf(stdout, "------ Unoptimized  IR ------\n");        
-    fprintf(stdout, "-----------------------------\n");        
-    ast_IR->print(llvm::errs());
+void Driver::reinitialize_context(){
+    context = std::make_unique<llvm::LLVMContext>();
+}
 
-    // run the opt passes on the function
-    code_optimizer.optimize(ast_IR);
-    
-    fprintf(stdout, "-----------------------------\n");        
-    fprintf(stdout, "------- Optimized  IR -------\n");
-    fprintf(stdout, "-----------------------------\n");        
+void Driver::handle_function(llvm::Function* ast_IR){
+    opt::Optimizer(*context).optimize(ast_IR);
     ast_IR->print(llvm::errs()); 
 }
 
-void Driver::handle_definition(ast::CodeGenerator& code_generator,opt::Optimizer& code_optimizer){
+void Driver::handle_definition(){
     if (auto ast = parser::definition()){
+        ast::CodeGenerator code_generator(*context,*module,function_prototypes);
         code_generator.visit(*ast);
+        
+        // adds function the map
+        function_prototypes[
+            ast->get_prototype()->get_name()
+        ] = std::make_unique<ast::Prototype>(*ast->get_prototype());
+        
         auto* ast_IR = code_generator.get_current_value();
         if(ast_IR){
-            fprintf(stdout, "Parsed a function definition.\n");
-            ast::Printer().print(ast.get());
             
-            handle_function(static_cast<llvm::Function*>(ast_IR),code_generator,code_optimizer);
+            handle_function(static_cast<llvm::Function*>(ast_IR));
 
-            // auto resource_tracker = JIT->getMainJITDylib().createResourceTracker();
             auto thread_safe_module = llvm::orc::ThreadSafeModule(std::move(module),std::move(context));
+            reinitialize_context();
+            reinitialize_module();
             
             // hand to the JIT
-            if(auto err = JIT->addModule(std::move(thread_safe_module)/*,resource_tracker*/)){
+            if(auto err = JIT->addModule(std::move(thread_safe_module))){
                 llvm::errs() << "JIT error: " << err << "\n";
             }
         }
@@ -76,14 +74,18 @@ void Driver::handle_definition(ast::CodeGenerator& code_generator,opt::Optimizer
     }
 }
 
-void Driver::handle_extern(ast::CodeGenerator& code_generator) {
+void Driver::handle_extern() {
     if (auto ast = parser::extern_()){
+        ast::CodeGenerator code_generator(*context,*module,function_prototypes);
         code_generator.visit(*ast);
+
+        // adds function the map
+        function_prototypes[
+            ast->get_name()
+        ] = std::make_unique<ast::Prototype>(*ast);
+
         auto* ast_IR = code_generator.get_current_value();
         if(ast_IR){
-            fprintf(stdout, "Parsed an extern\n");
-            ast::Printer().print(ast.get());
-            fprintf(stdout, "-----------------------------\n");
             ast_IR->print(llvm::errs());
         }
     }
@@ -93,19 +95,23 @@ void Driver::handle_extern(ast::CodeGenerator& code_generator) {
     }
 }
 
-void Driver::handle_top_level_expr(ast::CodeGenerator& code_generator,opt::Optimizer& code_optimizer){
+void Driver::handle_top_level_expr(){
     // Evaluate a top-level expression into an anonymous function.
     if (auto ast = parser::top_level_expr()){
-        code_generator.visit(*ast);
-        auto* ast_IR = code_generator.get_current_value();
+        llvm::Function* ast_IR = nullptr;
+        {
+            ast::CodeGenerator code_generator(*context,*module,function_prototypes);
+            code_generator.visit(*ast);
+            ast_IR = static_cast<llvm::Function*>(code_generator.get_current_value());
+        }
         if(ast_IR){
-            fprintf(stdout, "Parsed a top-level expr\n");
-            ast::Printer().print(ast.get());
 
-            handle_function(static_cast<llvm::Function*>(ast_IR),code_generator,code_optimizer);
+            handle_function(ast_IR);
 
             auto resource_tracker = JIT->getMainJITDylib().createResourceTracker();
             auto thread_safe_module = llvm::orc::ThreadSafeModule(std::move(module),std::move(context));
+            reinitialize_context();
+            reinitialize_module();
             
             // hand to the JIT
             if(auto err = JIT->addModule(std::move(thread_safe_module),resource_tracker)){
@@ -139,15 +145,10 @@ void Driver::handle_top_level_expr(ast::CodeGenerator& code_generator,opt::Optim
 
 void Driver::repl(){
     fprintf(stdout, "ready> ");
-    // Prime the first token.
+    // Prime the first token.    
     parser::advance();
     while (true){
-        
-        reinitialize_module();
-        auto code_generator = ast::CodeGenerator(*context,*module);
-        auto code_optimizer = opt::Optimizer(*context);
-
-        fprintf(stdout, "ready> ");
+        fprintf(stdout, "\nready> ");
         switch (parser::peek()){
         case lexer::tok_eof:
             return;
@@ -155,13 +156,13 @@ void Driver::repl(){
             parser::advance();
             break;
         case lexer::tok_def:
-            handle_definition(code_generator,code_optimizer);
+            handle_definition();
             break;
         case lexer::tok_extern:
-            handle_extern(code_generator);
+            handle_extern();
             break;
         default:
-            handle_top_level_expr(code_generator,code_optimizer);
+            handle_top_level_expr();
             break;
         }
     }

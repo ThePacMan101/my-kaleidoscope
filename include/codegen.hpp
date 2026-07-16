@@ -21,12 +21,16 @@ class CodeGenerator : public ast::Visitor {
         llvm::LLVMContext& context;
         llvm::Module& module;
         std::map<std::string, llvm::Value *> named_values;
+        const std::unordered_map<std::string, std::unique_ptr<Prototype>>& function_prototypes;
 
         // auxiliary for return values from visit methods
         llvm::Value* current_value = nullptr;
 
     public:
-        CodeGenerator(llvm::LLVMContext& context,llvm::Module& module);
+        CodeGenerator(
+            llvm::LLVMContext&,
+            llvm::Module&,
+            const std::unordered_map<std::string, std::unique_ptr<ast::Prototype>>&);
         ~CodeGenerator();
 
         llvm::Value* get_current_value() const {return current_value;}

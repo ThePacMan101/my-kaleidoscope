@@ -20,8 +20,11 @@ This is used in order to keep the code readable while maintaining the accept met
 
 CodeGenerator::~CodeGenerator() = default;
 
-CodeGenerator::CodeGenerator(llvm::LLVMContext& context,llvm::Module& module):
-        context {context}, module {module} {
+CodeGenerator::CodeGenerator(
+    llvm::LLVMContext& context,
+    llvm::Module& module,
+    const std::unordered_map<std::string, std::unique_ptr<Prototype>>& function_prototypes):
+        context {context}, module {module}, function_prototypes {function_prototypes} {
     builder = std::make_unique<llvm::IRBuilder<>>(context);
 }
 
@@ -100,9 +103,20 @@ void CodeGenerator::visit(BinaryExpr& node){
 }
 void CodeGenerator::visit(CallExpr& node){
     auto& callee = node.get_callee();
-    auto& args = node.get_args();
+    auto& args = node.get_args();    
     
-    llvm::Function* callee_IR = module.getFunction(callee);
+    llvm::Function* callee_IR = nullptr;
+    callee_IR = module.getFunction(callee);
+
+    // If the IR for the function is in another module, I need to generate it again
+    if(!callee_IR){
+        auto fi = function_prototypes.find(callee);
+        if(fi != function_prototypes.end()){
+            auto prototype = fi->second.get();
+            callee_IR = static_cast<llvm::Function*>(codegen(prototype)); 
+        }
+    } 
+    // If I still couldn't find the function, I don't know it.
     if(!callee_IR){
         current_value = logger::error<llvm::Value*>("Unknown function referenced");
         return;

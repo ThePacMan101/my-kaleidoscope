@@ -3,6 +3,7 @@
 #include <memory>
 #include "optimizer.hpp"
 #include "kaleidoscopeJIT.hpp"
+#include "ast.hpp"
 
 namespace ast{
     class CodeGenerator;
@@ -20,12 +21,14 @@ class Driver {
         std::unique_ptr<llvm::orc::KaleidoscopeJIT> JIT;
         std::unique_ptr<llvm::LLVMContext> context;
         std::unique_ptr<llvm::Module> module;
+        std::unordered_map<std::string,std::unique_ptr<ast::Prototype>> function_prototypes;
 
-        void handle_extern(ast::CodeGenerator&);
-        void handle_function(llvm::Function*,ast::CodeGenerator&,opt::Optimizer&);
-        void handle_definition(ast::CodeGenerator&,opt::Optimizer&);
-        void handle_top_level_expr(ast::CodeGenerator&,opt::Optimizer&);
+        void handle_extern();
+        void handle_function(llvm::Function*);
+        void handle_definition();
+        void handle_top_level_expr();
         void reinitialize_module();
+        void reinitialize_context();
         
     public:
         Driver();
