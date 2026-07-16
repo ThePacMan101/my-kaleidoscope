@@ -22,7 +22,7 @@ And run using:
 > make run
 ```
 ___
-Once inside the REPL, just type a function definition or any expression to evaluate it and printhe generated and optimized IR:
+Once inside the REPL, just type a function definition or any expression to evaluate it and print the IR:
 ```llvm
 ready> 1+1;
 
@@ -30,6 +30,32 @@ define double @__anon_expr() {
 entry:
   ret double 2.000000e+00
 }
-ready>
+
 > 2.000000
+```
+```llvm
+ready> extern sin(x);
+
+declare double @sin(double)
+```
+```llvm
+ready> def add(x y) x+y;
+
+define double @add(double %x, double %y) {
+entry:
+  %addtmp = fadd double %x, %y
+  ret double %addtmp
+}
+```
+```llvm
+ready> add(1,sin(1));
+
+define double @__anon_expr() {
+entry:
+  %calltmp = call double @sin(double 1.000000e+00)
+  %calltmp1 = call double @add(double 1.000000e+00, double f0x3FEAED548F090CEE)
+  ret double %calltmp1
+}
+
+> 1.841471
 ```
