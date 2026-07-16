@@ -25,6 +25,8 @@ class Driver {
         void handle_function(llvm::Function*,ast::CodeGenerator&,opt::Optimizer&);
         void handle_definition(ast::CodeGenerator&,opt::Optimizer&);
         void handle_top_level_expr(ast::CodeGenerator&,opt::Optimizer&);
+        void reinitialize_module();
+        
     public:
         Driver();
         ~Driver();
