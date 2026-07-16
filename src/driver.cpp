@@ -48,7 +48,7 @@ void Driver::handle_definition(){
         ast::CodeGenerator code_generator(*context,*module,function_prototypes);
         code_generator.visit(*ast);
         
-        // adds function the map
+        // adds function to the map
         function_prototypes[
             ast->get_prototype()->get_name()
         ] = std::make_unique<ast::Prototype>(*ast->get_prototype());
@@ -79,7 +79,7 @@ void Driver::handle_extern() {
         ast::CodeGenerator code_generator(*context,*module,function_prototypes);
         code_generator.visit(*ast);
 
-        // adds function the map
+        // adds function to the map
         function_prototypes[
             ast->get_name()
         ] = std::make_unique<ast::Prototype>(*ast);
