@@ -1,6 +1,6 @@
 # Kaleidoscope
 
-Kaleidoscope is a toy functional programming language used in the tutorial for [LLVM](https://llvm.org/). The tutorial is explicitly not using best practices in software engineering principles, so my idea was to implement a version that does so. While at it, I also use this opportunity to practice building C++ systems with Cmake, which I'm not that familiar with at the time of writing this.
+Kaleidoscope is a toy functional programming language used in the tutorial for [LLVM](https://llvm.org/). The tutorial is explicitly not using best practices in software engineering principles, so my idea was to implement a version that does so (tried my best!). While at it, I also use this opportunity to practice building C++ systems with Cmake, which I'm not that familiar with at the time of writing this.
 
 Usage of LLMs for code generation was kept to a mininum in this repo, as **the whole idea** is to learn LLVM.
 
