@@ -11,7 +11,7 @@ namespace ast {
 /*
 Receives a node, accepts it (i.e. generates code for the node) then returns the current_value. 
 
-This is used in order to keep the code readable while maintaining the accept method  return type as void
+This is used in order to keep the code readable while maintaining the accept method's return type as void
 */
 #define codegen(node) [&]() -> llvm::Value*{ \
     (node)->accept(*this);  \
