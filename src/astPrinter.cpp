@@ -66,6 +66,41 @@ void Printer::visit(CallExpr& node){
     std::cout << ")\n";
 }
 
+void Printer::visit(IfExpr& node){
+    auto cond  = node.get_condition();
+    auto then  = node.get_then();
+    auto else_ = node.get_else();
+
+    print_ident();
+    std::cout << "IfExpr: [\n";
+    indentation++;
+
+    print_ident();
+    std::cout << "IF(";
+    indentation++;
+    cond->accept(*this);
+    indentation--;
+    std::cout << ")\n";
+
+    print_ident();
+    std::cout << "THEN(";
+    indentation++;
+    then->accept(*this);
+    indentation--;
+    std::cout << ")\n";
+
+    print_ident();
+    std::cout << "ELSE(";
+    indentation++;
+    else_->accept(*this);
+    indentation--;
+    std::cout << ")\n";
+
+    print_ident();
+    indentation--;
+    std::cout << "]\n";
+}
+
 void Printer::visit(Prototype& node){
     print_ident();
     std::cout << "Prototype: " << node.get_name() << " (";
