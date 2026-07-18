@@ -165,8 +165,34 @@ std::unique_ptr<ast::Expr> primary(){
         case lexer::tok_number:
             return number();    
         case '(':
-            return paren();    
+            return paren();
+        case lexer::tok_if:
+            return if_else();
     }
+}
+
+std::unique_ptr<ast::Expr> if_else(){
+    advance(); // skip "if"
+    
+    auto cond = expression();
+    if(!cond) 
+        return logger::error<std::unique_ptr<ast::Expr>>("Expected expression after \"if\"");
+    if(curr_tok != lexer::tok_then)
+        return logger::error<std::unique_ptr<ast::Expr>>("Expected \"then\" after \"if\" condition");
+    advance(); // skip "then"
+    
+    auto then = expression();
+    if(!then) 
+        return logger::error<std::unique_ptr<ast::Expr>>("Expected expression after \"then\"");
+    if(curr_tok != lexer::tok_else)
+        return logger::error<std::unique_ptr<ast::Expr>>("Expected \"else\" after \"then\" expression");
+    advance(); // skip "else"
+
+    auto else_ = expression();
+    if(!else_)
+        return logger::error<std::unique_ptr<ast::Expr>>("Expected expression after \"else\"");
+    
+    return std::make_unique<ast::IfExpr>(std::move(cond),std::move(then),std::move(else_));
 }
 
 std::unique_ptr<ast::Prototype> prototype(){
