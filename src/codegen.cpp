@@ -165,7 +165,7 @@ void CodeGenerator::visit(IfExpr& node){
     
     // create the else and after blocks but doesn't attach them to the function yet
     llvm::BasicBlock* else_block = llvm::BasicBlock::Create(context,"else");
-    llvm::BasicBlock* aftr_block  = llvm::BasicBlock::Create(context,"aftr");
+    llvm::BasicBlock* aftr_block  = llvm::BasicBlock::Create(context,"aftrif");
 
     // creates a (Br)anch with a (Cond)ition targeting the then and else blocks
     builder->CreateCondBr(cond_IR,then_block,else_block);
