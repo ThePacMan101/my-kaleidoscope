@@ -40,6 +40,7 @@ class CodeGenerator : public ast::Visitor {
         void visit(BinaryExpr& node) override;
         void visit(CallExpr& node) override;
         void visit(IfExpr& node) override;
+        void visit(ForExpr& node) override;
         void visit(Prototype& node) override;
         void visit(Function& node) override;
     

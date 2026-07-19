@@ -230,6 +230,115 @@ void CodeGenerator::visit(IfExpr& node){
     current_value = static_cast<llvm::Value*>(phi_node);
     return;
 }
+void CodeGenerator::visit(ForExpr& node){
+    auto& iterator_name = node.get_var();
+    auto start = node.get_start();
+    auto end   = node.get_end();
+    auto step  = node.get_step();
+    auto body  = node.get_body();
+
+    llvm::Value* start_IR = codegen(start);
+    if(!start_IR){
+        current_value = logger::error<llvm::Value*>("Invalid start expression");
+        return;
+    }
+
+    // grab the function being generated
+    llvm::Function* this_func = builder->GetInsertBlock()->getParent();
+    
+    // save the block I was previously generating
+    // I will need this later to build the phi node (as loops could be executed 0 times)
+    llvm::BasicBlock* pre_loop_block = builder->GetInsertBlock();
+    
+    // create a block for the for loop and attatch to the function
+    llvm::BasicBlock* loop_block = llvm::BasicBlock::Create(context,"loop",this_func);
+
+    // put a fall through from pre_loop_block to loop_block
+    // all blocks NEED an explicit end, either a (br)anch or a (ret)urn!
+    builder->CreateBr(loop_block);
+
+    // start appending instructions at the end of the loop block 
+    builder->SetInsertPoint(loop_block);
+
+    // the first thing in a loop is a phi node, as once here we could've come from the
+    // previous block or from the same block in a previus iteration of the loop
+    // we need to discern what is the current value for the iterator
+    llvm::PHINode* iterator_IR = builder->CreatePHI(
+        llvm::Type::getDoubleTy(context),2,iterator_name
+    );
+
+    // In case I come from the previous block, the initial value
+    // is the starting value in the for loop
+    iterator_IR->addIncoming(start_IR,pre_loop_block);
+    
+    // Inside a loop, the iterator is a variable in the namespace
+    // I store a possible old value since I could be shadowing an outter variable
+    // notice that shadowed_var_IR could be null if we didn't shadow anyone
+    llvm::Value* shadowed_var_IR = named_values[iterator_name];
+    named_values[iterator_name] = static_cast<llvm::Value*>(iterator_IR);
+
+    // We build the loop's body and check for an error
+    // notice that they have access to the iterator variable inside the body!
+    if(!codegen(body)){
+        current_value = logger::error<llvm::Value*>("Invalid start expression");
+        return;
+    }
+
+    // Now we need to handle the step
+    llvm::Value* step_IR = nullptr;
+    
+    // If we didn't ommit the step we codegen that
+    if(step){
+        step_IR = codegen(step);
+        if(!step_IR){
+            current_value = logger::error<llvm::Value*>("Invalid step in for loop");
+            return;
+        }
+    // otherwise use 1.0f for default step
+    }else{
+        step_IR = llvm::ConstantFP::get(context,llvm::APFloat(1.0));
+    }
+
+    // update iterator variable
+    // notice that the other part of the phi node will refer to this guy!
+    llvm::Value* next_iterator = builder->CreateFAdd(iterator_IR,step_IR,"nextiterator");
+    
+    llvm::Value* end_condition_IR = codegen(end);
+    if(!end_condition_IR){
+        current_value = logger::error<llvm::Value*>("Invalid end condition in for loop");
+    }
+    end_condition_IR = builder->CreateFCmpONE(
+        // (end_condition_IR) != (0)
+        end_condition_IR,
+        llvm::ConstantFP::get(context,llvm::APFloat(0.0)),
+        "loopcond"
+    );
+
+    // after loop block
+    llvm::BasicBlock* loop_end_block = builder->GetInsertBlock();
+    llvm::BasicBlock* aftr_block = llvm::BasicBlock::Create(
+        context,"aftrfor",this_func
+    );
+    builder->CreateCondBr(end_condition_IR,loop_block,aftr_block);
+    
+    // new code is generated in the after block
+    builder->SetInsertPoint(aftr_block);
+
+    // in the phi node, if I'm coming from the loop, the new value for the
+    // iterator should be the updated iterator  
+    iterator_IR->addIncoming(next_iterator,loop_end_block);
+
+    // If I shadowed someone, restore that now
+    // otherside just erase the variable from the context
+    if(shadowed_var_IR)
+        named_values[iterator_name] = shadowed_var_IR;
+    else
+        named_values.erase(iterator_name);
+
+    // In kaleidoscope a for loop always returns 0.0;
+    current_value = llvm::Constant::getNullValue(llvm::Type::getDoubleTy(context));
+    return;
+}
 void CodeGenerator::visit(Prototype& node){
     auto& function_name = node.get_name();
     auto& args = node.get_args();
