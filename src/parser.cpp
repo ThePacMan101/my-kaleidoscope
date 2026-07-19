@@ -168,6 +168,8 @@ std::unique_ptr<ast::Expr> primary(){
             return paren();
         case lexer::tok_if:
             return if_else();
+        case lexer::tok_for:
+            return for_();
     }
 }
 
@@ -193,6 +195,58 @@ std::unique_ptr<ast::Expr> if_else(){
         return logger::error<std::unique_ptr<ast::Expr>>("Expected expression after \"else\"");
     
     return std::make_unique<ast::IfExpr>(std::move(cond),std::move(then),std::move(else_));
+}
+
+std::unique_ptr<ast::Expr> for_(){
+    // syntax e.g. : for i=1 , i<n , 1.0 in body();
+    // syntax e.g. : for i=1 , i<n in body();
+
+    advance(); // skip "for"
+    
+    if(curr_tok!=lexer::tok_identifier)
+        return logger::error<std::unique_ptr<ast::Expr>>("Expected identifier after \"for\"");
+    auto var = lexer::get_identifier_str();
+    advance(); // skip iterator name
+
+    if(curr_tok!= '=')
+        return logger::error<std::unique_ptr<ast::Expr>>("Expected \"=\" after iterator name in for expression");
+    advance(); // skip "="
+
+    auto start = expression();
+    if(!start)
+        return logger::error<std::unique_ptr<ast::Expr>>("Invalid start expression in for loop");
+    
+    if(curr_tok!=',')
+        return logger::error<std::unique_ptr<ast::Expr>>("Expected \",\" after start expression in for loop");
+    advance(); // skip ","
+
+    auto end = expression();
+    if(!end)
+        return logger::error<std::unique_ptr<ast::Expr>>("Invalid end expression in for loop");
+
+    std::unique_ptr<ast::Expr> step;
+    if(curr_tok==','){ // if I see another "," that means the step is not omitted
+        advance(); // skip ","
+        step = expression();
+        if(!step)
+            return logger::error<std::unique_ptr<ast::Expr>>("Invalid step in for loop");
+    }
+
+    if(curr_tok != lexer::tok_in)
+        return logger::error<std::unique_ptr<ast::Expr>>("Expected \"in\" after for loop header");
+    advance(); // skip "in"
+
+    auto body = expression();
+    if(!body)
+        return logger::error<std::unique_ptr<ast::Expr>>("Invalid body in for loop");
+    
+    return std::make_unique<ast::ForExpr>(
+        var,
+        std::move(start),
+        std::move(end),
+        std::move(step),
+        std::move(body)
+    );
 }
 
 std::unique_ptr<ast::Prototype> prototype(){

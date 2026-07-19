@@ -36,6 +36,12 @@ inline static int identifier() {
     if(identifier_str == "else"){
         return tok_else;
     }
+    if(identifier_str == "for"){
+        return tok_for;
+    }
+    if(identifier_str == "in"){
+        return tok_in;
+    }
     return tok_identifier;
 }
 

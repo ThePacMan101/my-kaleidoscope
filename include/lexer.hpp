@@ -9,7 +9,9 @@ namespace lexer{
         tok_number=-5,
         tok_if=-6,
         tok_then=-7,
-        tok_else=-8
+        tok_else=-8,
+        tok_for=-9,
+        tok_in=-10
         // any single character valid tokens are themselves,
         // i.e. the token for '+' has its number identifier 
         // in the enum equal to its ascii value

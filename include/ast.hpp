@@ -76,6 +76,26 @@ class IfExpr : public Expr{
         void accept(Visitor& visitor) override;
 };
 
+class ForExpr : public Expr{
+    std::string var;
+    std::unique_ptr<Expr> start,end,step,body;
+    public:
+        ForExpr(
+            std::string var,
+            std::unique_ptr<Expr> start,
+            std::unique_ptr<Expr> end,
+            std::unique_ptr<Expr> step,
+            std::unique_ptr<Expr> body
+        ) : var {var}, start{std::move(start)}, end{std::move(end)}, step{std::move(step)},body{std::move(body)} {}
+        const std::string& get_var() const {return var;}
+        Expr* get_start() const {return start.get();}
+        Expr* get_end() const {return end.get();}
+        Expr* get_step() const {return step.get();}
+        Expr* get_body() const {return body.get();}
+
+        void accept(Visitor& visitor) override;
+};
+
 // this represents only the interface to a function
 class Prototype {
     std::string name;

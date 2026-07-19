@@ -101,6 +101,44 @@ void Printer::visit(IfExpr& node){
     std::cout << "]\n";
 }
 
+void Printer::visit(ForExpr& node){
+    auto& var   = node.get_var();
+    auto  start = node.get_start();
+    auto  end   = node.get_end();
+    auto  step  = node.get_step();
+    auto  body  = node.get_body();
+    
+    print_ident();
+    std::cout << "ForExpr: ("<< var <<")[\n";
+    indentation++;
+    
+    print_ident();
+    std::cout << "start: ";
+    start->accept(*this);
+    std::cout << ";\n";
+
+    print_ident();
+    std::cout << "end: ";
+    end->accept(*this);
+    std::cout << ";\n";
+
+    print_ident();
+    std::cout << "step: ";
+    step->accept(*this);
+    std::cout << ")\n";
+
+    print_ident();
+    std::cout << "body: {\n";
+    indentation++;
+    body->accept(*this);
+    indentation--;
+    print_ident();
+    std::cout << "}\n";
+
+    indentation--;
+    std::cout << "]\n";
+}
+
 void Printer::visit(Prototype& node){
     print_ident();
     std::cout << "Prototype: " << node.get_name() << " (";
