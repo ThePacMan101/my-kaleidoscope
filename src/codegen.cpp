@@ -137,6 +137,99 @@ void CodeGenerator::visit(CallExpr& node){
     current_value = builder->CreateCall(callee_IR,args_IR,"calltmp");
     return;
 }
+void CodeGenerator::visit(IfExpr& node){
+    auto cond  = node.get_condition();
+    auto then  = node.get_then();
+    auto else_ = node.get_else();
+
+    llvm::Value* cond_IR = codegen(cond);
+    if(!cond_IR){
+        current_value = logger::error<llvm::Value*>("Invalid if condition");
+        return;
+    }
+
+    // Compare Floats ONE: (O)rdered (N)ot (E)quals
+    // APFloat: (A)rbitrary (P)recision Float
+    cond_IR = builder->CreateFCmpONE(
+        // (cond_IR) != (0.0f)
+        cond_IR, llvm::ConstantFP::get(context,llvm::APFloat(0.0)),
+        // Instruction label
+        "ifcond" 
+    );
+
+    // grab the current function that is being generated
+    llvm::Function* this_func = builder->GetInsertBlock()->getParent();
+
+    // create a then block and attach to the end of the function
+    llvm::BasicBlock* then_block = llvm::BasicBlock::Create(context,"then",this_func);
+    
+    // create the else and after blocks but doesn't attach them to the function yet
+    llvm::BasicBlock* else_block = llvm::BasicBlock::Create(context,"else");
+    llvm::BasicBlock* aftr_block  = llvm::BasicBlock::Create(context,"aftr");
+
+    // creates a (Br)anch with a (Cond)ition targeting the then and else blocks
+    builder->CreateCondBr(cond_IR,then_block,else_block);
+
+    // next instructions will be appended at the end of then block
+    builder->SetInsertPoint(then_block);
+
+    // generates the body of then block
+    llvm::Value* then_IR = codegen(then);
+    if(!then_IR){
+        current_value = logger::error<llvm::Value*>("Invalid then expression");
+        return;
+    }
+
+    // "goto aftr" at the end of then block
+    builder->CreateBr(aftr_block);
+
+    // we need to make sure we have the latest then_block, because it could
+    // have changed when we called codegen on then's.
+    // changes can happen, for example, when then's body is also a if-else stmt.
+    // We need an up to date value for then_block, since it will be used
+    // when generating the phi node in the aftr block
+    then_block = builder->GetInsertBlock();
+
+    // now we insert the else block at the end of the function being generated
+    this_func->insert(this_func->end(),else_block);
+    // and next instructions will be appended at the end of else block
+    builder->SetInsertPoint(else_block);
+
+    // generates the body of the else block
+    llvm::Value* else_IR = codegen(else_);
+    if(!else_IR){
+        current_value = logger::error<llvm::Value*>("Invalid else expression");
+        return;
+    }
+
+    // "goto after" at the end of else block
+    builder->CreateBr(aftr_block);
+    
+    // same as with then_block, we need to reset else_block after possible
+    // changes made in codegen for else's body. This will be used later 
+    // in the phi node.
+    else_block = builder->GetInsertBlock();
+
+    // now we generate the aftr block with the phi node!
+    this_func->insert(this_func->end(),aftr_block);
+    builder->SetInsertPoint(aftr_block);
+    
+    // phi_node is like a shrodinger's variable. It can be one thing or another
+    // but with the same type, in the case of kaleidoscope, always a double type.
+    // as this phi_node comes from two blocks, we need to specify that. 
+    // And "iftmp" is the name of that variable in the resulting IR
+    llvm::PHINode *phi_node = builder->CreatePHI(
+        llvm::Type::getDoubleTy(context),
+        2,
+        "iftmp"
+    );
+
+    phi_node->addIncoming(then_IR,then_block);
+    phi_node->addIncoming(else_IR,else_block);
+
+    current_value = static_cast<llvm::Value*>(phi_node);
+    return;
+}
 void CodeGenerator::visit(Prototype& node){
     auto& function_name = node.get_name();
     auto& args = node.get_args();
