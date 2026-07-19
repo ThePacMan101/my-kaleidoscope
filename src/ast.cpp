@@ -18,6 +18,9 @@ void CallExpr::accept(Visitor& visitor){
 void IfExpr::accept(Visitor& visitor){
     visitor.visit(*this);
 }
+void ForExpr::accept(Visitor& visitor){
+    visitor.visit(*this);
+}
 void Prototype::accept(Visitor& visitor){
     visitor.visit(*this);
 }
