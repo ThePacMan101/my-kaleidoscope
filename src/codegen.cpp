@@ -153,7 +153,7 @@ void CodeGenerator::visit(IfExpr& node){
     cond_IR = builder->CreateFCmpONE(
         // (cond_IR) != (0.0f)
         cond_IR, llvm::ConstantFP::get(context,llvm::APFloat(0.0)),
-        // Instruction label
+        // target variable name for instruction result
         "ifcond" 
     );
 
