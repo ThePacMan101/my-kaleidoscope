@@ -9,6 +9,7 @@ namespace parser{
     std::unique_ptr<ast::Expr> paren();
     std::unique_ptr<ast::Expr> identifier();
     std::unique_ptr<ast::Expr> primary();
+    std::unique_ptr<ast::Expr> if_else();
     std::unique_ptr<ast::Prototype> prototype();
     std::unique_ptr<ast::Function> definition();
     std::unique_ptr<ast::Prototype> extern_();

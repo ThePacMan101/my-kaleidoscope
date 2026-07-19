@@ -61,6 +61,21 @@ class CallExpr : public Expr{
         void accept(Visitor& visitor) override;
 };
 
+class IfExpr : public Expr{
+    std::unique_ptr<Expr> condition,then,else_;
+    public:
+        IfExpr(
+            std::unique_ptr<Expr> condition,
+            std::unique_ptr<Expr> then,
+            std::unique_ptr<Expr> else_
+        ) : condition {std::move(condition)}, then {std::move(then)}, else_ {std::move(else_)} {};
+        Expr* get_condition() const {return condition.get();}
+        Expr* get_then() const {return then.get();}
+        Expr* get_else() const {return else_.get();}
+        
+        void accept(Visitor& visitor) override;
+};
+
 // this represents only the interface to a function
 class Prototype {
     std::string name;

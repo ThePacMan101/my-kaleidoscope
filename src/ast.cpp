@@ -15,6 +15,9 @@ void BinaryExpr::accept(Visitor& visitor){
 void CallExpr::accept(Visitor& visitor){
     visitor.visit(*this);
 }
+void IfExpr::accept(Visitor& visitor){
+    visitor.visit(*this);
+}
 void Prototype::accept(Visitor& visitor){
     visitor.visit(*this);
 }

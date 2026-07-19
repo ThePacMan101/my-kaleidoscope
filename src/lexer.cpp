@@ -27,6 +27,15 @@ inline static int identifier() {
     if(identifier_str == "extern"){
         return tok_extern;
     }
+    if(identifier_str == "if"){
+        return tok_if;
+    }
+    if(identifier_str == "then"){
+        return tok_then;
+    }
+    if(identifier_str == "else"){
+        return tok_else;
+    }
     return tok_identifier;
 }
 
